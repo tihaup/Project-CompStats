@@ -1,4 +1,99 @@
 #-----------------------------------------------------------------------------
+#### Data Generating Process
+#-----------------------------------------------------------------------------
+
+dgp <- function(p,N,treatment,regressors) { 
+    
+    if (regressors == "nocorr"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+    }
+    
+    if (regressors == "poly1"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+        X[,p-1] <- X[,1]^2
+        X[,p] <- X[,2]^2
+    }
+    
+    if (regressors == "poly2"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+        X[,2] <- X[,1]^2
+    }    
+    
+    if (regressors == "interaction"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+        X[,p] <- X[,1]*X[,2]
+    }
+
+    if (regressors == "corr1"){
+        mu <- rep(0,p)
+        Sigma <- 1
+        sigma <- matrix(rep(0.5),p,p)
+        for (i in 1:p){
+            sigma[i,i] <- Sigma
+        }
+        X <- mvrnorm(N, mu, sigma)
+    }
+    
+    if (regressors == "corr2"){
+        mu <- rep(0,p)
+        Sigma <- 1
+        sigma <- diag(Sigma, p, p)
+        sigma[1,2] <- 0.9
+        sigma[2,1] <- 0.9
+        X <- mvrnorm(N, mu, sigma)
+    }
+    
+    #### Treatment Probability
+    
+    W <- sample(c(0,1), N, replace = TRUE, prob = c(0.5, 0.5))
+    
+    if (regressors == "selectionbias"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+        W <- ifelse(X[,1] > 0, sample(c(0,1), N, replace = TRUE, prob = c(0.25, 0.75))
+                ,sample(c(0,1), N, replace = TRUE, prob = c(0.75, 0.25)))
+    }
+    #### Beta Vector
+    
+    b_vec <- seq(0.5,1,length.out = p)
+    
+    if (regressors == "beta12"){
+        X <- matrix(rnorm(n=N*p,0,1), N, p)
+        b_vec[1:2] <- 0
+    }
+    
+    #### true treatment effects 
+    
+    if (treatment == "treat1"){
+        t <- 0.2
+    }
+    
+    if (treatment == "treat2"){ 
+        t <- 0.1 + 0.1*ifelse(X[,1] > 0, 1, 0) +  0.1*ifelse(X[,2] > 0, 1, 0)
+    }
+    
+    if (treatment == "treat3"){ 
+        t <- 0.1 + X[,1]*ifelse(X[,1] > 0, 1, 0) +  X[,2]*ifelse(X[,2] > 0, 1, 0)
+    }
+    
+    if (treatment == "treat4"){ 
+        t <- 0.1 + X[,1]*ifelse(X[,1] > 0, 1, 0) +  X[,2]*ifelse(X[,2] > 0, 1, 0) + X[,3]*ifelse(X[,3] > 0, 1, 0) + X[,4]*ifelse(X[,4] > 0, 1, 0)
+    }
+    
+    if (treatment == "treat5"){
+        t <- 0.2 + X[,1]*X[,2]
+    }
+    
+    
+    Y <- X %*% b_vec + t*W + rnorm(N,0,0.1)
+    df <- data.frame(Y,W,t,X)
+    
+    return(df)
+}
+
+
+
+
+#-----------------------------------------------------------------------------
 #### Causal Forest - Treatment Effects
 #-----------------------------------------------------------------------------
 
@@ -77,7 +172,7 @@ get_knnval <- function(k,df){
 #### Simulation Study - Table (Comparison)
 #-----------------------------------------------------------------------------
 
-simstudy <- function(p,numsim,dgp){
+simstudy <- function(p,numsim,treatment,regressors){
     
     MSE_cf <- c()
     MSE_10nn <- c()
@@ -96,7 +191,7 @@ simstudy <- function(p,numsim,dgp){
         for (i in 1:numsim){
     
             #### DGP
-            data <- dgp(p,N=n)
+            data <- dgp(p,N=n,treatment,regressors)
         
             #### Get Treatment Values
             cfval <- cf_selectmedian(data)
