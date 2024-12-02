@@ -7,7 +7,7 @@ This is the final project of the Microeconometrics course (Master's) in the summ
 
 The Jupyter Notebook of my project can be accessed here: 
 
-<a href="https://nbviewer.jupyter.org/github/OpenSourceEconomics/ose-data-science-course-projeect-tihaup/blob/master/Forced_Attendance_Notebook.ipynb" 
+<a href="https://nbviewer.org/github/tihaup/Project-CompStats/blob/f35d07521a22598d8fe89bfbeb379e4a1441fe80/Main_Project.ipynb" 
    target="_parent">
    <img align="center"
   src="https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.png"
